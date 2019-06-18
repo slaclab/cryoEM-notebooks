@@ -2,7 +2,7 @@
 
 This repo contains information that we deem useful in understand the end-to-end problems of cryoEM and cryoET. Specifically, we develop jupyter notebooks that walks us through the mathematical and computational operations.
 
-- Image formation model
+- [Image formation model](notebooks/Image%20Formation%20Model.ipynb)
 -- Microscope Architecture and Parameters
 -- Detector Limits DQE, MTF etc.
 -- Theoretical Limits
