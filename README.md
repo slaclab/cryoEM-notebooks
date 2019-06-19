@@ -35,5 +35,5 @@ This repo contains information that we deem useful in understanding the end-to-e
   - Tilt Series for Tomo
 
 - Pipeline Notebooks
-- Image formats and IO
+- [Image formats and IO](notebooks/Simple%20IO%20and%20Visualisation.ipynb)
 
