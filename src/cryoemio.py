@@ -1,0 +1,97 @@
+import numpy as np
+import h5py
+import os
+import mrcfile
+
+def mrc2data(mrc_file = None):
+	""" mrc2data
+	"""
+	if mrc_file is not None:
+		with mrcfile.open(mrc_file, 'r+', permissive=True) as mrc:
+                        micrograph = mrc.data
+		if(len(micrograph.shape)==2):
+			micrograph = micrograph[np.newaxis,...]
+		return micrograph
+
+def mrc2dic2hdf5(mrc_file = None, h5_file = None, dic = None):
+	""" mrc2hdf5
+	"""
+	if mrc_file is not None:
+		micrograph = mrc2data(mrc_file = mrc_file)
+		if dic is None:
+			dic = {}
+		dic['data'] = micrograph
+		save_dict_to_hdf5(dic, h5_file)
+
+def  mrclist2hdf5( mrc_list=None, h5_file=None , verbose=False):
+	"""
+	"""
+	if h5_file is not None:
+		with h5py.File(h5_file, 'w') as hf:
+			i=0
+			if mrc_list is not None:
+				for mrc in mrc_list:
+					new_data = mrc2data(mrc_file = mrc)
+					if verbose:
+						print('{0} {1}'.format(mrc,new_data.shape))
+					if(i==0):
+						hf.create_dataset('particles', data = new_data, maxshape=(None,new_data.shape[1],new_data.shape[2]), chunks=True)
+					else:
+						hf['particles'].resize( (hf['particles'].shape[0] + new_data.shape[0]), axis=0 )
+						hf['particles'][-new_data.shape[0]:] = new_data
+					i+=1
+
+# The following hdf5 save and load functions are taken from here: 
+#https://codereview.stackexchange.com/questions/120802/recursively-save-python-dictionaries-to-hdf5-files-using-h5py
+
+def save_dict_to_hdf5(dic, filename):
+    """
+    ....
+    """
+    with h5py.File(filename, 'w') as h5file:
+        recursively_save_dict_contents_to_group(h5file, '/', dic)
+
+def recursively_save_dict_contents_to_group(h5file, path, dic):
+    """
+    ....
+    """
+    for key, item in dic.items():
+        if isinstance(item, (np.ndarray, np.int64, np.float64, int, float, str, bytes)):
+            h5file[path + key] = item
+        elif isinstance(item, type(None)):
+            h5file[path + key] = str('None')
+        elif isinstance(item, dict):
+            recursively_save_dict_contents_to_group(h5file, path + key + '/', item)
+        else:
+            raise ValueError('Cannot save %s type'%type(item))
+
+def load_dict_from_hdf5(filename):
+    """
+    ....
+    """
+    with h5py.File(filename, 'r') as h5file:
+        return recursively_load_dict_contents_from_group(h5file, '/')
+
+def recursively_load_dict_contents_from_group(h5file, path):
+    """
+    ....
+    """
+    ans = {}
+    for key, item in h5file[path].items():
+        if isinstance(item, h5py._hl.dataset.Dataset):
+            ans[key] = item[()] #item.value
+        elif isinstance(item, h5py._hl.group.Group):
+            ans[key] = recursively_load_dict_contents_from_group(h5file, path + key + '/')
+    return ans
+#
+def simio(pdbdir, pdb_keyword, crd_keyword, mrcdir, mrc_keyword):
+    """ simio
+    """
+    pdb_file = pdbdir+pdb_keyword+'.pdb'
+    crd_file = mrcdir+crd_keyword+'.txt'
+    mrc_file = mrcdir+mrc_keyword+'.mrc'
+    log_file = mrcdir+mrc_keyword+'.log'
+    inp_file = mrcdir+mrc_keyword+'.inp'
+    h5_file  = mrcdir+mrc_keyword+'.h5'
+#    
+    return pdb_file, mrc_file, crd_file, log_file, inp_file, h5_file
