@@ -31,7 +31,7 @@ This repo contains information that we deem useful in understand the end-to-end 
   - Weiner Filtering
 
 - Simulating Micrographs
-  - Projected Images for SPA
+  - [Projected Images for SPA](notebooks/Simulating%20data.ipynb)
   - Tilt Series for Tomo
 
 - Pipeline Notebooks
