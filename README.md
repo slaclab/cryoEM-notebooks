@@ -1,6 +1,6 @@
 # cryoEM-notebooks
 
-This repo contains information that we deem useful in understand the end-to-end problems of cryoEM and cryoET. Specifically, we develop jupyter notebooks that walks us through the mathematical and computational operations.
+This repo contains information that we deem useful in understanding the end-to-end computational problems of cryoEM and cryoET. Specifically, we develop jupyter notebooks that walks us through the mathematical and computational operations required to reconstruct density maps from micrographs.
 
 - [Image formation model](notebooks/Image%20Formation%20Model.ipynb)
   - Microscope Architecture and Parameters
