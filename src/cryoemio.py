@@ -41,6 +41,21 @@ def  mrclist2hdf5( mrc_list=None, h5_file=None , verbose=False):
 						hf['particles'][-new_data.shape[0]:] = new_data
 					i+=1
 
+def loadhdf5(h5_file, verbose=False):
+	""" 
+	...
+	"""
+	data = h5py.File(h5_file,'r')
+	if verbose:
+		print('List of datasets in .hdf5 file:')
+		data.visititems(print_attrs)
+	return data
+
+def print_attrs(name, obj):
+	print( name )
+	for key, val in obj.attrs.items():
+		print("    %s: %s" % (key, val))
+
 # The following hdf5 save and load functions are taken from here: 
 #https://codereview.stackexchange.com/questions/120802/recursively-save-python-dictionaries-to-hdf5-files-using-h5py
 
