@@ -3,6 +3,17 @@ import h5py
 import os
 import mrcfile
 
+def simio(pdbdir, pdb_keyword, mrcdir, mrc_keyword):
+    """ simio
+    """
+    pdb_file = pdbdir+pdb_keyword+'.pdb'
+    crd_file = mrcdir+mrc_keyword+'.txt'
+    mrc_file = mrcdir+mrc_keyword+'.mrc'
+    log_file = mrcdir+mrc_keyword+'.log'
+    inp_file = mrcdir+mrc_keyword+'.inp'
+    h5_file  = mrcdir+mrc_keyword+'.h5'
+    return pdb_file, mrc_file, crd_file, log_file, inp_file, h5_file
+
 def mrc2data(mrc_file = None):
 	""" mrc2data
 	"""
@@ -13,6 +24,7 @@ def mrc2data(mrc_file = None):
 			micrograph = micrograph[np.newaxis,...]
 		return micrograph
 
+###### / dictionary approach
 def mrc2dic2hdf5(mrc_file = None, h5_file = None, dic = None):
 	""" mrc2hdf5
 	"""
@@ -30,6 +42,25 @@ def data_and_dic_2hdf5(data, h5_file, dic = None):
 		dic = {}
 	dic['data'] = data
 	save_dict_to_hdf5(dic, h5_file)
+
+############# / specific to TEM-simulator
+def add_crd_to_h5(input_h5file = None, input_crdfile = None, output_h5file = None):
+	""" add_crd_to_h5: [specific to TEM-simulator input/output]
+	this function assumes an .hdf5 file containing particle images in a dictionary. Potentially some other info.
+	We want to add a field here where the particle coordinates read from the crd file are added.
+	"""
+	if input_h5file is not None:
+		dic = load_dict_from_hdf5(input_h5file)
+	else:
+		dic = {}
+	if input_crdfile is not None:
+		crd = np.genfromtxt(input_crdfile, skip_header=3)
+		dic['coordinates'] = crd
+		save_dict_to_hdf5(dic, output_h5file)
+	else:
+		print("Error")
+############ specific to TEM-simulator / #####
+##### dictionary approach / ####
 
 def  mrclist2hdf5( mrc_list=None, h5_file=None , verbose=False):
 	"""
@@ -64,16 +95,16 @@ def print_attrs(name, obj):
 	for key, val in obj.attrs.items():
 		print("    %s: %s" % (key, val))
 
+
 # The following hdf5 save and load functions are taken from here: 
 #https://codereview.stackexchange.com/questions/120802/recursively-save-python-dictionaries-to-hdf5-files-using-h5py
-
 def save_dict_to_hdf5(dic, filename):
     """
     ....
     """
     with h5py.File(filename, 'w') as h5file:
         recursively_save_dict_contents_to_group(h5file, '/', dic)
-
+#
 def recursively_save_dict_contents_to_group(h5file, path, dic):
     """
     ....
@@ -87,14 +118,14 @@ def recursively_save_dict_contents_to_group(h5file, path, dic):
             recursively_save_dict_contents_to_group(h5file, path + key + '/', item)
         else:
             raise ValueError('Cannot save %s type'%type(item))
-
+#
 def load_dict_from_hdf5(filename):
     """
     ....
     """
     with h5py.File(filename, 'r') as h5file:
         return recursively_load_dict_contents_from_group(h5file, '/')
-
+#
 def recursively_load_dict_contents_from_group(h5file, path):
     """
     ....
@@ -106,15 +137,4 @@ def recursively_load_dict_contents_from_group(h5file, path):
         elif isinstance(item, h5py._hl.group.Group):
             ans[key] = recursively_load_dict_contents_from_group(h5file, path + key + '/')
     return ans
-#
-def simio(pdbdir, pdb_keyword, crd_keyword, mrcdir, mrc_keyword):
-    """ simio
-    """
-    pdb_file = pdbdir+pdb_keyword+'.pdb'
-    crd_file = mrcdir+crd_keyword+'.txt'
-    mrc_file = mrcdir+mrc_keyword+'.mrc'
-    log_file = mrcdir+mrc_keyword+'.log'
-    inp_file = mrcdir+mrc_keyword+'.inp'
-    h5_file  = mrcdir+mrc_keyword+'.h5'
-#    
-    return pdb_file, mrc_file, crd_file, log_file, inp_file, h5_file
+####################

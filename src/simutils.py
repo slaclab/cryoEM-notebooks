@@ -32,17 +32,21 @@ def rotationMatrixToEulerAngles(R) :
     z = (z*180)/np.pi
     return np.array([x, y, z])
 
-def get_rotlist(numpart):
-    """ get_rotlist
-    """
-    rotlist = []
-    for x in range(0,numpart+1):
-        x = special_ortho_group.rvs(3)
-        y = rotationMatrixToEulerAngles(x)
-        rotlist.append(y)
-    return rotlist
+def get_rotlist(numpart, pre_rotate=None):
+	""" get_rotlist
+	"""
+	rotlist = []
+	for x in range(0,numpart+1):
+		if pre_rotate is None:
+			x = special_ortho_group.rvs(3)
+			y = rotationMatrixToEulerAngles(x)
+		else:
+			angle = 360.*np.random.random_sample() - 180.
+			y = np.array([angle, pre_rotate[0], pre_rotate[1]])
+		rotlist.append(y)
+	return rotlist
         
-def write_crd_file(numpart, xrange=np.arange(-100,110,10), yrange=np.arange(-100,110,10), crd_file='crd.txt'):
+def write_crd_file(numpart, xrange=np.arange(-100,110,10), yrange=np.arange(-100,110,10), crd_file='crd.txt', pre_rotate=None):
     """ write_crd_file
     The table should have 6 columns. The first three columns are x, y, and z coordinates of
     the particle center. The following three columns are Euler angles for rotation around
@@ -52,7 +56,7 @@ def write_crd_file(numpart, xrange=np.arange(-100,110,10), yrange=np.arange(-100
     if os.path.exists(crd_file):
          print(crd_file+" already exists.")          
     else:
-        rotlist  = get_rotlist(numpart)
+        rotlist  = get_rotlist(numpart, pre_rotate=pre_rotate)
         crd = open(crd_file, "w")
         crd.write('# File created by TEM-simulator, version 1.3.\n')
         crd.write('{numpart}  6\n'.format(numpart=numpart))
