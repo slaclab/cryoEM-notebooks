@@ -23,6 +23,14 @@ def mrc2dic2hdf5(mrc_file = None, h5_file = None, dic = None):
 		dic['data'] = micrograph
 		save_dict_to_hdf5(dic, h5_file)
 
+def data_and_dic_2hdf5(data, h5_file, dic = None):
+	"""
+	"""
+	if dic is None:
+		dic = {}
+	dic['data'] = data
+	save_dict_to_hdf5(dic, h5_file)
+
 def  mrclist2hdf5( mrc_list=None, h5_file=None , verbose=False):
 	"""
 	"""
