@@ -3,7 +3,7 @@ import h5py
 import os
 import mrcfile
 
-def simio(pdbdir, pdb_keyword, mrcdir, mrc_keyword):
+def simio(pdbdir, pdb_keyword, mrcdir, mrc_keyword, action='define'):
     """ simio
     """
     pdb_file = pdbdir+pdb_keyword+'.pdb'
@@ -12,7 +12,12 @@ def simio(pdbdir, pdb_keyword, mrcdir, mrc_keyword):
     log_file = mrcdir+mrc_keyword+'.log'
     inp_file = mrcdir+mrc_keyword+'.inp'
     h5_file  = mrcdir+mrc_keyword+'.h5'
-    return pdb_file, mrc_file, crd_file, log_file, inp_file, h5_file
+    if(action=='define'):
+        return pdb_file, mrc_file, crd_file, log_file, inp_file, h5_file
+    elif(action=='clean'):
+        for f in (mrc_file, crd_file, log_file, inp_file):
+            if os.path.isfile(f):
+                os.remove(f)
 
 def mrc2data(mrc_file = None):
 	""" mrc2data
@@ -44,6 +49,18 @@ def data_and_dic_2hdf5(data, h5_file, dic = None):
 	save_dict_to_hdf5(dic, h5_file)
 
 ############# / specific to TEM-simulator
+def add_crd_to_dic(crd_file = None, dic = None):
+	""" add_crd_to_dic: [specific to TEM-simulator input/output]
+	this function reads the text content of a coordinates file and adds it to the input dictionary.
+	Returns the richer dictionary.
+	"""
+	if dic is None:
+		dic = {}
+	if crd_file is not None:
+		crd = np.genfromtxt(crd_file, skip_header=3)
+		dic['coordinates'] = crd
+	return dic
+#
 def add_crd_to_h5(input_h5file = None, input_crdfile = None, output_h5file = None):
 	""" add_crd_to_h5: [specific to TEM-simulator input/output]
 	this function assumes an .hdf5 file containing particle images in a dictionary. Potentially some other info.
