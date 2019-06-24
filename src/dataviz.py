@@ -2,6 +2,13 @@
 import numpy as np
 from matplotlib import pyplot as plt
 #
+def view_image(img):
+	"""
+	"""
+	fig = plt.figure(figsize=(6,6))
+	plt.imshow(img, cmap='Greys')
+	plt.colorbar()
+#
 def view_particles(data, slicing=(1,1,1), figsize=1, ncol=5 ):
 	"""
 	"""
