@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
 from matplotlib.ticker import MultipleLocator
+from matplotlib.colors import LogNorm
 #
 def view_image(img):
 	"""
@@ -26,6 +27,18 @@ def view_particles(data, slicing=(1,1,1), figsize=1, ncol=5 ):
 
 ############
 # < BIPLOTS
+
+def biplot_histncontour(x,y,levels=[1,3,5]):
+    """
+    """
+    fig = plt.figure(figsize=(18,9))
+    plt.subplot(121)
+    counts,xbins,ybins,image = plt.hist2d(x,y,bins=150,norm=LogNorm(), cmap = plt.cm.inferno)
+    plt.colorbar()
+    plt.subplot(122)
+    plt.contourf(np.log10(counts.transpose()), extent=[xbins[0],xbins[-1],ybins[0],ybins[-1]],cmap = plt.cm.Greys, levels=levels)
+    plt.grid()
+    plt.colorbar()
 
 def biplots(prj,prj2=None,n=1,plottype='hexbin',nbins=10,figsize=-1,c=None,show_histo=False,figname=''):
     """ biplots : plot populations in component space
