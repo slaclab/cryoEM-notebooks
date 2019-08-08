@@ -28,19 +28,19 @@ def view_particles(data, slicing=(1,1,1), figsize=1, ncol=5 ):
 ############
 # < BIPLOTS
 
-def biplot_histncontour(x,y,levels=[1,3,5]):
+def biplot_histncontour(x,y,bins=150,levels=[1,3,5]):
     """
     """
     fig = plt.figure(figsize=(18,9))
     plt.subplot(121)
-    counts,xbins,ybins,image = plt.hist2d(x,y,bins=150,norm=LogNorm(), cmap = plt.cm.inferno)
+    counts,xbins,ybins,image = plt.hist2d(x,y,bins=bins,norm=LogNorm(), cmap = plt.cm.inferno)
     plt.colorbar()
     plt.subplot(122)
     plt.contourf(np.log10(counts.transpose()), extent=[xbins[0],xbins[-1],ybins[0],ybins[-1]],cmap = plt.cm.Greys, levels=levels)
     plt.grid()
     plt.colorbar()
 
-def biplots(prj,prj2=None,n=1,plottype='hexbin',nbins=10,figsize=-1,c=None,show_histo=False,figname=''):
+def biplots(prj,prj2=None,n=1,plottype='hexbin',nbins=10,figsize=-1,c=None,show_histo=False,figname='',scatter_size=None):
     """ biplots : plot populations in component space
 
     Description
@@ -73,7 +73,7 @@ def biplots(prj,prj2=None,n=1,plottype='hexbin',nbins=10,figsize=-1,c=None,show_
     for i in np.arange(0,nrow,1):
         for j in np.arange(0,ncol,1):
             if(i<j):
-                ax = biplot_axis(n,i,j,gs,fig,labels,Ax=prj[:,j],Ay=prj[:,i],c=c,cmap=cmap,nbins=nbins,majortick=0.2,minortick=0.1,linewidth=2.5,plottype=plottype)
+                ax = biplot_axis(n,i,j,gs,fig,labels,Ax=prj[:,j],Ay=prj[:,i],c=c,cmap=cmap,nbins=nbins,majortick=0.2,minortick=0.1,linewidth=2.5,plottype=plottype, scatter_size=scatter_size)
             elif(i==j):
                 if(show_histo):
                     ax = fig.add_subplot(gs[i,j])
@@ -99,13 +99,13 @@ def biplots(prj,prj2=None,n=1,plottype='hexbin',nbins=10,figsize=-1,c=None,show_
                             ax.annotate(txt,(colorbar[idx],colorbar[idx]))
             else:
                 if prj2 is not None:
-                    ax = biplot_axis(n,i,j,gs,fig,labels,Ax=prj2[:,j],Ay=prj2[:,i],c=c,cmap=cmap,nbins=nbins,majortick=0.2,minortick=0.1,linewidth=2.5,plottype=plottype)
+                    ax = biplot_axis(n,i,j,gs,fig,labels,Ax=prj2[:,j],Ay=prj2[:,i],c=c,cmap=cmap,nbins=nbins,majortick=0.2,minortick=0.1,linewidth=2.5,plottype=plottype, scatter_size=scatter_size)
     plt.tight_layout()
     plt.show()
     if(figname):
         fig.savefig(figname+'_biplot.png')
 
-def biplot_axis(n,i,j,gs,fig,labels,Ax=np.zeros(1),Ay=np.zeros(1),c=None,cmap=None,nbins=1,majortick=0.2,minortick=0.1,linewidth=2.5,plottype='scatter'):
+def biplot_axis(n,i,j,gs,fig,labels,Ax=np.zeros(1),Ay=np.zeros(1),c=None,cmap=None,nbins=1,majortick=0.2,minortick=0.1,linewidth=2.5,plottype='scatter', scatter_size=None):
     minorticklocator = MultipleLocator(minortick)
     majorticklocator = MultipleLocator(majortick)
     ax = fig.add_subplot(gs[i,j])
@@ -150,7 +150,10 @@ def biplot_axis(n,i,j,gs,fig,labels,Ax=np.zeros(1),Ay=np.zeros(1),c=None,cmap=No
     elif(j < i and j !=0 and i != n-1):
         ax.tick_params(axis='both', which='both',bottom=False,top=False,left=False,right=False,labelbottom=False,labeltop=False,labelleft=False,labelright=False,labelsize='large')
     if(plottype == 'scatter'):
-        ax.scatter(Ax, Ay, c=c, cmap=cmap)
+        if scatter_size is None:
+            ax.scatter(Ax, Ay, c=c, cmap=cmap)
+        else:
+            ax.scatter(Ax, Ay, c=c, cmap=cmap, s=scatter_size)
     else:
         ax.hexbin(Ax, Ay, gridsize=nbins, cmap=cmap, mincnt=1)
     return ax
