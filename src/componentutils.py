@@ -6,6 +6,25 @@ from sklearn.preprocessing import normalize
 #########################
 # interface with RELION #
 #########################
+def get_cryosparc_projections(proj_file, nmodes=3, norm=10000):
+    """
+    """
+    print('Load coordinates:')
+    data = np.array(np.load(proj_file).tolist())
+    i = 2*nmodes-1
+    components = data[:,-i::2]/norm
+    print('Number of components :',components.shape[1])
+    print('Number of particles  :',components.shape[0])
+    return components
+
+def get_relion_projections(proj_file,eigvec_file):
+    """
+    get_relion_projections
+    """
+    print('Load data [check out eigenvectors and eigenvalues]:')
+    ids,dims,U,L,Vt = load_pca(proj_file,eigvec_file)
+    return Vt.T
+
 def load_pca(proj_file,eigvec_file,as_is=True,plot=True):
     """ load_pca:
     INPUTS

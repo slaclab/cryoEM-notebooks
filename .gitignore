@@ -1,3 +1,6 @@
+# RELION-related heavy files
+analyse_projections_along_eigenvectors_all_particles.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
