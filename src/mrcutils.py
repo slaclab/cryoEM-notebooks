@@ -124,7 +124,24 @@ def data2mrc(mrc_filename,data,mrc_template=None):
         mrc = mrcfile.open(mrc_filename, mode='r+')
         mrc.data[:] = data
         mrc.close()
-        
+    
+### ad-hoc manipulations
+
+def cut_thresholded_map(input_map, 
+                        low_threshold=1, low_blur=1, low_bin=0.1, 
+                        high_threshold=6, high_blur=15, high_bin=0.01):
+    """
+    """
+    data_dry = mrc_select(input_map, mode='above_value', value=high_threshold)
+    mask_dry = data2mask(data_dry, sigma_blur=high_blur, threshold=high_bin)
+    data_fat = mrc_select(input_map, mode='above_value', value=low_threshold)
+    mask_fat = data2mask(data_fat, sigma_blur=low_blur, threshold=low_bin)
+    body0 = np.minimum(mask_dry,mask_fat)
+    bodyK = mask_fat - body0
+    return body0, bodyK
+
+### visualize
+
 def view_map_xyzproj(data,style=None):
     masked = np.ma.masked_equal(data, 0)
     N = data.shape[0]*data.shape[1]*data.shape[2]

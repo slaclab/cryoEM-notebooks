@@ -1,6 +1,10 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn import mixture
+import skimage.morphology as morphology
+from skimage.morphology import watershed
+from skimage.feature import peak_local_max
+from scipy import ndimage
 
 def scan_gmm(V,n_components=3,plot=True):
     """
@@ -35,6 +39,18 @@ def assign_gmm(V,n_components=2):
         index.append(np.ma.where(assignment == i))
         print(". component ",i," has ",index[-1][0].shape[0]," particles")
     return assignment,index
+
+def segment_map(input_map, length_scale=1):
+    """
+    """
+    distance = ndimage.distance_transform_edt(input_map)
+    local_maxi = peak_local_max(distance, 
+                                indices=False, 
+                                footprint=np.ones((length_scale,length_scale,length_scale)), 
+                                labels=input_map)
+    markers = morphology.label(local_maxi)
+    labelled_map = watershed(-distance, markers, mask=input_map)
+    return labelled_map
 
 #########
 # < simple plots

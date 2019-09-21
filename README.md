@@ -20,7 +20,7 @@ Two main simulation approaches can be distinguished. They are related but differ
 #### Simulate particles 
 *see notebook on [(github)](notebooks/ImageFormationModel/Projection.ipynb) [(colab)](https://colab.research.google.com/github/slaclab/cryoEM-notebooks/blob/master/notebooks/ImageFormationModel/Projection.ipynb)*
 #### Simulate micrographs 
-*see notebook on [(github)](notebooks/Simulating%20data.ipynb) [(colab)](https://colab.research.google.com/github/slaclab/cryoEM-notebooks/blob/master/notebooks/Simulating%20data.ipynb)*
+*see notebook on [(github)](notebooks/Simulating%20data.ipynb) [(colab)](https://colab.research.google.com/github/slaclab/cryoEM-notebooks/blob/master/notebooks/ImageFormationModel/Simulating%20data.ipynb)*
 #### Tilt Series for Tomo
 
 ## Micrographs: movies to picture
@@ -42,6 +42,8 @@ Two main simulation approaches can be distinguished. They are related but differ
 Here we survey the various approaches available on the market to address the heterogeneity problem in single particle analysis with cryoEM. We also provide convenience tools to help the user prepare inputs and interpret outputs from these tools.
 ### Multibody Refinement with RELION - prepare input 
 *see notebook on [(github)](notebooks/VolumeHeterogeneity/Automated%20Body%20Definition.ipynb) [(colab)](https://colab.research.google.com/github/slaclab/cryoEM-notebooks/blob/master/notebooks/VolumeHeterogeneity/Automated%20Body%20Definition.ipynb)*
+In this notebook, we show how to prepare the body masks necessary to run RELION's multibody refinement tool, given a local resolution map as input.
+
 ### 3D Variability with cryoSPARC
 ### Visualization
 ### Heterogeneity Analysis
