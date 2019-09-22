@@ -6,7 +6,7 @@ from skimage.morphology import watershed
 from skimage.feature import peak_local_max
 from scipy import ndimage
 
-def scan_gmm(V,n_components=3,plot=True):
+def scan_gmm(V,n_components=10,plot=True, do_return=False):
     """
     """
     n_components_range = range(1, n_components+1)
@@ -26,7 +26,8 @@ def scan_gmm(V,n_components=3,plot=True):
     else:
         print('BIC')
         print(bic)
-    return best_gmm,bic
+    if do_return:
+        return best_gmm,bic
 
 def assign_gmm(V,n_components=2):
     """

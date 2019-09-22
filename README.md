@@ -49,6 +49,8 @@ In this notebook, we show how to prepare the body masks necessary to run RELION'
 *see notebook on [(github)](notebooks/VolumeHeterogeneity/Latent%20Space%20Visualizer.ipynb) [(colab)](https://colab.research.google.com/github/slaclab/cryoEM-notebooks/blob/master/notebooks/VolumeHeterogeneity//Latent%20Space%20Visualizer.ipynb)*
 In this notebook, we show how to visualize the outputs from RELION's multibody refinement tool and cryoSPARC 3D Variability tool.
 ### Heterogeneity Analysis
+*see notebook on [(github)](notebooks/VolumeHeterogeneity/Latent%20Space%20Analyzer.ipynb) [(colab)](https://colab.research.google.com/github/slaclab/cryoEM-notebooks/blob/master/notebooks/VolumeHeterogeneity//Latent%20Space%20Analyzer.ipynb)*
+In this notebook, we show how to analize the outputs from RELION's multibody refinement tool and cryoSPARC 3D Variability tool.
 
 ## Tomograms vs SPA (2d vs 3d)
 ### Tomogram Reconstruction Methods

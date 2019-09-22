@@ -17,13 +17,19 @@ def get_cryosparc_projections(proj_file, nmodes=3, norm=10000):
     print('Number of particles  :',components.shape[0])
     return components
 
-def get_relion_projections(proj_file,eigvec_file):
+def get_relion_projections(proj_file,eigvec_file, as_is=False):
     """
     get_relion_projections
     """
     print('Load data [check out eigenvectors and eigenvalues]:')
-    ids,dims,U,L,Vt = load_pca(proj_file,eigvec_file)
+    ids,dims,U,L,Vt = load_pca(proj_file,eigvec_file, as_is=as_is)
     return Vt.T
+
+def split_relion_projections(proj_file, eigvec_file, c=None, keyword='split_'):
+    """
+    """
+    ids,dims,U,L,Vt = load_pca(proj_file,eigvec_file)
+    save_cluster(ids,dims,U,L,Vt,c=c,keyword=keyword)
 
 def load_pca(proj_file,eigvec_file,as_is=True,plot=True):
     """ load_pca:
