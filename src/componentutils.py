@@ -3,11 +3,13 @@ import re
 from matplotlib import pyplot as plt
 from scipy import linalg
 from sklearn.preprocessing import normalize
-#########################
-# interface with RELION #
-#########################
+
+## INTERFACES
+
 def get_cryosparc_projections(proj_file, nmodes=3, norm=10000):
     """
+    get_cryosparc_projections: read passthrough file, outputs components array
+    +++++++++++++++++++++++++
     """
     print('Load coordinates:')
     data = np.array(np.load(proj_file).tolist())
@@ -19,7 +21,8 @@ def get_cryosparc_projections(proj_file, nmodes=3, norm=10000):
 
 def get_relion_projections(proj_file,eigvec_file, as_is=False):
     """
-    get_relion_projections
+    get_relion_projections: read output from multibody refinement, outputs components array
+    ++++++++++++++++++++++
     """
     print('Load data [check out eigenvectors and eigenvalues]:')
     ids,dims,U,L,Vt = load_pca(proj_file,eigvec_file, as_is=as_is)
@@ -27,9 +30,13 @@ def get_relion_projections(proj_file,eigvec_file, as_is=False):
 
 def split_relion_projections(proj_file, eigvec_file, c=None, keyword='split_'):
     """
+    split_relion_projections: read output from multibody refinement and given assignment,
+    ++++++++++++++++++++++++  splits dataset accordingly and writes each cluster out.
     """
-    ids,dims,U,L,Vt = load_pca(proj_file,eigvec_file)
+    ids,dims,U,L,Vt = load_pca(proj_file,eigvec_file, plot=False)
     save_cluster(ids,dims,U,L,Vt,c=c,keyword=keyword)
+
+## PCA
 
 def load_pca(proj_file,eigvec_file,as_is=True,plot=True):
     """ load_pca:
@@ -48,13 +55,9 @@ def load_pca(proj_file,eigvec_file,as_is=True,plot=True):
         . proj[n_cmp,n_sample] : each column is the coordinate of a particle
     """
     # load projections and extract eigenvalues
-    pfile = np.genfromtxt(proj_file,dtype='str')
-    ids   = pfile[:,0]
-    proj, evalue  = normalize(pfile[:,1:],axis=0,return_norm=True)
+    proj, evalue, ids = read_relion_projection_file(proj_file)
     # load eigenvectors
-    vfile = np.genfromtxt(eigvec_file,dtype='str')
-    dims = vfile[0,:]
-    evector = vfile[1:,:].astype(np.float)
+    evector, dims = read_relion_eigenvector_file(eigvec_file)
     # check dimensions
     if proj.shape[1] == evector.shape[0] == evalue.shape[0] :
         if as_is:
@@ -74,38 +77,79 @@ def load_pca(proj_file,eigvec_file,as_is=True,plot=True):
     else:
         print('ERROR in dimensions...')
 
+def get_svd(data):
+    """
+    """
+    Vsvd,Lsvd,Usvd = linalg.svd(data,full_matrices=False)
+    return Usvd.T,Lsvd,Vsvd.T
+
+def recompose(U,L,Vt):
+    """ recompose
+    """
+    data = np.dot(U,np.dot(np.diag(L),Vt))
+    return data
+
+def de_mean(data):
+    """
+    """
+    return (data.T - np.mean(data, axis=1)).T
+
+## READ-WRITE
+
 def save_cluster(ids,dims,U,L,Vt,c=None,keyword='save_'):
     """
     """
     if c is not None:
         # save eigenvector
         filename=keyword+'_eigvec.dat'
-        f = open(filename,'w')
-        for item in dims:
-            f.write("%s " % item)
-        f.write("\n")
-        for i_component in np.arange(0,U.shape[1]):
-            comp = U[:,i_component]
-            for item in comp:
-                f.write("%e " % item)
-            f.write("\n")
-        f.close()
+        print('.. writing {0}'.format(filename))
+        write_relion_eigenvector_file(filename, U, dims)
         # for each cluster, save projections, scaled by eigenvalue
         projs = np.dot(np.diag(L),Vt)
         n_components = np.max(np.unique(c))+1
         for i in np.arange(0,n_components):
-            filename=keyword+'_cluster_'+str(i)+'_projs.dat'
-            f = open(filename,'w')
             index = np.ma.where(c == i)
-            ids_kept = ids[index]
-            prj_kept = projs[:,index[0]]
-            for j in np.arange(0,len(index[0])):
-                f.write("%s " % ids_kept[j])
-                prjlist = prj_kept[:,j]
-                for item in prjlist:
-                    f.write("%f " % item)
-                f.write("\n")
-            f.close()
+            filename=keyword+'_cluster_'+str(i)+'_projs.dat'
+            print('.. writing {0}'.format(filename))
+            write_relion_projection_file(filename, projs, ids, index)
+
+def read_relion_projection_file(proj_file):
+    pfile = np.genfromtxt(proj_file,dtype='str')
+    ids   = pfile[:,0]
+    proj, evalue  = normalize(pfile[:,1:],axis=0,return_norm=True)
+    return proj, evalue, ids
+
+def write_relion_projection_file(filename, projs, ids, index):
+    f = open(filename,'w')
+    ids_kept = ids[index]
+    prj_kept = projs[:,index[0]]
+    for j in np.arange(0,len(index[0])):
+        f.write("%s " % ids_kept[j])
+        prjlist = prj_kept[:,j]
+        for item in prjlist:
+            f.write("%f " % item)
+        f.write("\n")
+    f.close()
+
+def read_relion_eigenvector_file(eigvec_file):
+    vfile = np.genfromtxt(eigvec_file,dtype='str')
+    dims = vfile[0,:]
+    evector = vfile[1:,:].astype(np.float)
+    return evector, dims
+
+def write_relion_eigenvector_file(filename, evector, dims):
+    f = open(filename,'w')
+    for item in dims:
+        f.write("%s " % item)
+    f.write("\n")
+    for i_component in np.arange(0,evector.shape[1]):
+        comp = evector[:,i_component]
+        for item in comp:
+            f.write("%e " % item)
+        f.write("\n")
+    f.close()
+
+### STAR 
 
 def dat2star(starfile,datfile,outfile='test.star'):
     particles_ids  = particles_read(starfile)
@@ -142,25 +186,8 @@ def particles_write(file,mask=None,output_file='test.dat'):
     output.close()
     print('Wrote particles to file ',output_file)
 
-###
-def get_svd(data):
-    """
-    """
-    Vsvd,Lsvd,Usvd = linalg.svd(data,full_matrices=False)
-    return Usvd.T,Lsvd,Vsvd.T
+## PLOT
 
-def recompose(U,L,Vt):
-    """ recompose
-    """
-    data = np.dot(U,np.dot(np.diag(L),Vt))
-    return data
-
-def de_mean(data):
-    """
-    """
-    return (data.T - np.mean(data, axis=1)).T
-
-###
 def plot_eig(dims,eigvec,eigval,figsize=4):
     """
     """

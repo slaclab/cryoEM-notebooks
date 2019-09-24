@@ -5,6 +5,19 @@ import skimage.morphology as morphology
 from skimage.morphology import watershed
 from skimage.feature import peak_local_max
 from scipy import ndimage
+from scipy import stats
+
+## BINNING
+
+def bin_component(components, nbins=10, i_component=0):
+    binsize = int(100/nbins)
+    data_percentile = np.array([stats.percentileofscore(components[:,i_component], a) for a in components[:,i_component]])
+    bins_percentile = np.arange(0, 100+binsize, binsize)
+    data_binned_indices = np.digitize(data_percentile, bins_percentile, right=True)
+    index = assignment_to_index(data_binned_indices, nbins+1, istart=1)
+    return data_binned_indices, index
+
+## GMM
 
 def scan_gmm(V,n_components=10,plot=True, do_return=False):
     """
@@ -35,11 +48,10 @@ def assign_gmm(V,n_components=2):
     gmm = mixture.GaussianMixture(n_components=n_components)
     gmm.fit(V)
     assignment = gmm.predict(V)
-    index = []
-    for i in np.arange(0,n_components):
-        index.append(np.ma.where(assignment == i))
-        print(". component ",i," has ",index[-1][0].shape[0]," particles")
+    index = assignment_to_index(assignment, n_components)
     return assignment,index
+
+## SEGMENTATION
 
 def segment_map(input_map, length_scale=1):
     """
@@ -53,8 +65,16 @@ def segment_map(input_map, length_scale=1):
     labelled_map = watershed(-distance, markers, mask=input_map)
     return labelled_map
 
-#########
-# < simple plots
+## TOOLS
+
+def assignment_to_index(assignment, nbins, istart=0):
+    index = []
+    for i in np.arange(istart,nbins):
+        index.append(np.ma.where(assignment == i))
+        print(". component ",i," has ",index[-1][0].shape[0]," particles")
+    return index
+
+## PLOTS
 
 def plot_vector(x):
     """
