@@ -203,7 +203,7 @@ def plot_eig(dims,eigvec,eigval,figsize=4):
     cbar = ax1.figure.colorbar(im1, ax=ax1)
     im2 = ax2.barh(dimarray,eigval,color='black')
     ax2.set_yticks(dimarray)
-    ax2.set_yticklabels(np.arange(1,len(dims)+1))
+    ax2.set_yticklabels(np.arange(0,len(dims)+2))
     ax2.set_xlabel('eigenvalue')
     plt.tight_layout()
     plt.show()

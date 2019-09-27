@@ -9,9 +9,26 @@ from scipy import stats
 
 ## BINNING
 
-def bin_component(components, nbins=10, i_component=0):
+def bin_along_vector(components, nbins=10, vector=[1,1]):
+    """
+    project data on line defined by unit vector and bin it
+    """
+    ndim  = len(vector)
+    u_vec = vector/np.linalg.norm(vector)
+    projection = np.dot(components[:,0:ndim],u_vec)
+    data_percentile = np.array([stats.percentileofscore(projection, a) for a in projection])
     binsize = int(100/nbins)
+    bins_percentile = np.arange(0, 100+binsize, binsize)
+    data_binned_indices = np.digitize(data_percentile, bins_percentile, right=True)
+    index = assignment_to_index(data_binned_indices, nbins+1, istart=1)
+    return data_binned_indices, index
+
+def bin_component(components, nbins=10, i_component=0):
+    """
+    bin along i_component
+    """
     data_percentile = np.array([stats.percentileofscore(components[:,i_component], a) for a in components[:,i_component]])
+    binsize = int(100/nbins)
     bins_percentile = np.arange(0, 100+binsize, binsize)
     data_binned_indices = np.digitize(data_percentile, bins_percentile, right=True)
     index = assignment_to_index(data_binned_indices, nbins+1, istart=1)
