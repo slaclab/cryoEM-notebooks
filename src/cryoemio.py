@@ -47,56 +47,35 @@ def starkey2np(data, key, keytype=float):
     return array
 
 def star2hdf5(starfile, hdf5file, path_to_mrcs):
-    """
-    """
+    print("> Reading star file...")
     data = star_reader(starfile)
-    with h5py.File(h5_file, 'w') as hf:
-        i=0
-        for particle in data['metadata']['_rlnimagename']:
-            print(particle)
-            # retrieve the particle image
-            frame, relpath = particle.split('@')
-            iframe = np.int(frame)
-            mrcs_filename = relpath.split('/')[-1]
-            mrcs_file = path_to_mrcs+mrcs_filename
-            mrcs_data = mrc2data(mrc_file = mrcs_file)
-            image = mrcs_data[iframe-1,...]
-            # retrieve the metadata
-            ### 2D class metadata
-            class_number = data['metadata']['_rlnclassnumber'][i]
-            inplane_rotation = data['metadata']['_rlnanglepsi'][i]
-            ### CTF related metada
-            ctf_zu = data['metadata']['_rlndefocusu'][i]
-            ctf_zv = data['metadata']['_rlndefocusv'][i]
-            defocus = (ctf_zu + ctf_zv)/2.0
-            #
-            if(i==0):
-                hf.create_dataset('particles', 
-                                   data=image,
-                                   maxshape=(None,image.shape[0],image.shape[1]), 
-                                   chunks=True)
-                hf.create_dataset('defocus',
-                                   data = defocus,
-                                   maxshape=(None,1),
-                                   chunks=True)
-                hf.create_dataset('2dclass',
-                                   data = class_number,
-                                   maxshape=(None,1),
-                                   chunks=True)
-                hf.create_dataset('in-plane_rotation',
-                                  data = inplane_rotation,
-                                  maxshape=(None,1),
-                                  chunks=True)
-            else:
-                hf['particles'].resize( (hf['particles'].shape[0] + 1), axis=0 )
-                hf['particles'][-1:] = image
-                hf['defocus'].resize( (hf['defocus'].shape[0] + 1), axis=0 )
-                hf['defocus'][-1:] = defocus
-                hf['2dclass'].resize( (hf['2dclass'].shape[0] + 1), axis=0 )
-                hf['2dclass'][-1:] = defocus
-                hf['in-plane_rotation'].resize( (hf['in-plane_rotation'].shape[0] + 1), axis=0 )
-                hf['in-plane_rotation'][-1:] = defocus
-            i+=1
+    n_particles = len(data['metadata']['_rlnimagename'])
+    image = rlnimagename2image(data['metadata']['_rlnimagename'][0], path_to_mrcs)
+    nx,ny = image.shape
+    image_stack = np.empty((n_particles, nx, ny))
+    print("> Reading corresponding particle mrcs files...")
+    for i in np.arange(n_particles):
+        image_stack[i,...] = rlnimagename2image(data['metadata']['_rlnimagename'][i], path_to_mrcs)
+    with h5py.File(hdf5file, 'w') as hf:
+        print("> Writing particle images to h5 file...")
+        hf.create_dataset('particles', data=image_stack)
+        print("> Writin metadata to h5 file...")
+        for key in data['metadata'].keys():
+            try:
+                content = np.array(data['metadata'][key], dtype='float_')
+            except:
+                content = np.array(data['metadata'][key], dtype='<S')
+            hf.create_dataset(key, data=content)
+    print('> Done! Output at {}'.format(hdf5file))
+
+def rlnimagename2image(particle, path_to_mrcs):
+    frame, relpath = particle.split('@')
+    iframe = np.int(frame)
+    mrcs_filename = relpath.split('/')[-1]
+    mrcs_file = path_to_mrcs+mrcs_filename
+    mrcs_data = mrc2data(mrc_file = mrcs_file)
+    image = mrcs_data[iframe-1,...]
+    return image
 
 ##
 
