@@ -68,6 +68,35 @@ def star2hdf5(starfile, hdf5file, path_to_mrcs):
             hf.create_dataset(key, data=content)
     print('> Done! Output at {}'.format(hdf5file))
 
+def star2hdf5_serial(starfile, hdf5file, path_to_mrcs, istep=-1):
+    print("> Reading star file...")
+    data = star_reader(starfile)
+    n_particles = len(data['metadata']['_rlnimagename'])
+    if(istep<=0):
+        istep = int(n_particles/100)
+    with h5py.File(hdf5file, 'w') as hf:
+        print("> Writin metadata to h5 file...")
+        for key in data['metadata'].keys():
+            print('>>> {}'.format(key))
+            try:
+                content = np.array(data['metadata'][key], dtype='float_')
+            except:
+                content = np.array(data['metadata'][key], dtype='<S')
+            hf.create_dataset(key, data=content)
+        print('> Writing {} particle images to h5 file...'.format(n_particles))
+        for i in np.arange(n_particles):
+            if(i % 10 == 0):
+                print('[{}/{}] '.format(i, n_particles), end=" ")
+            image = rlnimagename2image(data['metadata']['_rlnimagename'][i], path_to_mrcs)
+            image = image[np.newaxis,...]
+            if(i==0):
+                hf.create_dataset('particles', data=image, maxshape=(None,image.shape[1],image.shape[2]), chunks=True)
+            else:
+                hf['particles'].resize( (hf['particles'].shape[0] + image.shape[0]), axis=0 )
+                hf['particles'][-image.shape[0]:] = image
+        print('')
+    print('> Done! Output at {}'.format(hdf5file))
+
 def rlnimagename2image(particle, path_to_mrcs):
     frame, relpath = particle.split('@')
     iframe = np.int(frame)
