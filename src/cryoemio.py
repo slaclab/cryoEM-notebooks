@@ -106,6 +106,33 @@ def rlnimagename2image(particle, path_to_mrcs):
     image = mrcs_data[iframe-1,...]
     return image
 
+def get_mrcorder_list(data, path):
+    """
+    the order is different when:
+    - read from the star file (star2hdf5_serial)
+    - read from the list glob (mrclist2hdf5)
+    this function provides the index order
+    """
+    list_in_data = []
+    for image in data['_rlnimagename']:
+        string = str(image).split("'")[1]
+        frame, relpath = string.split('@')
+        fname  = relpath.split('/')[-1]
+        list_in_data.append(fname)
+    #
+    list_in_path = []
+    for mrcs in glob.glob(path+'*.mrcs'):
+        fname = mrcs.split('/')[-1]
+        list_in_path.append(fname)
+    #
+    index_order = []
+    for key in list_in_path:
+        hits = [i for i, j in enumerate(list_in_data) if j == key]
+        for hit in hits:
+            index_order.append(hit)
+    #
+    return index_order
+
 ##
 
 def simio(pdbdir, pdb_keyword, mrcdir, mrc_keyword, action='define'):
