@@ -5,6 +5,17 @@ import mrcfile
 import CifFile
 from CifFile import ReadCif
 
+## cryoSPARC related ##
+
+def read_csfile(csfile):
+    content = np.array(np.load(csfile).tolist())
+    dtype   = np.load(csfile).dtype
+    header = []
+    for key in dtype.fields.keys():
+        header.append(key)
+    header = np.array(header)
+    return header, content
+
 ## RELION related ##
 
 def star_reader(filename):
