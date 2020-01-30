@@ -19,13 +19,13 @@ def get_cryosparc_projections(proj_file, nmodes=3, norm=10000):
     print('Number of particles  :',components.shape[0])
     return components
 
-def get_relion_projections(proj_file,eigvec_file, as_is=False):
+def get_relion_projections(proj_file,eigvec_file, as_is=False, figname=''):
     """
     get_relion_projections: read output from multibody refinement, outputs components array
     ++++++++++++++++++++++
     """
     print('Load data [check out eigenvectors and eigenvalues]:')
-    ids,dims,U,L,Vt = load_pca(proj_file,eigvec_file, as_is=as_is)
+    ids,dims,U,L,Vt = load_pca(proj_file,eigvec_file, as_is=as_is, figname=figname)
     return Vt.T
 
 def split_relion_projections(proj_file, eigvec_file, c=None, keyword='split_'):
@@ -38,7 +38,7 @@ def split_relion_projections(proj_file, eigvec_file, c=None, keyword='split_'):
 
 ## PCA
 
-def load_pca(proj_file,eigvec_file,as_is=True,plot=True):
+def load_pca(proj_file,eigvec_file,as_is=True,plot=True, figname=''):
     """ load_pca:
     INPUTS
     ------
@@ -72,7 +72,7 @@ def load_pca(proj_file,eigvec_file,as_is=True,plot=True):
         print('Number of components :',Vt.shape[0])
         print('Number of particles  :',Vt.shape[1])
         if plot :
-            plot_eig(dims,U.T,L)
+            plot_eig(dims,U.T,L,figname=figname)
         return ids,dims,U,L,Vt
     else:
         print('ERROR in dimensions...')
@@ -93,6 +93,48 @@ def de_mean(data):
     """
     """
     return (data.T - np.mean(data, axis=1)).T
+
+
+## ICA stuff
+
+def ave_score(X,n,niter=100,fun='logcosh'):
+    # notice that X components are column-oriented
+    score_ave=[]
+    score_var=[]
+    for i in np.arange(0,n,1):
+        score_tmp = []
+        for j in np.arange(0,niter,1):
+            score_tmp.append(negent_score(X[:,i],fun))
+        score_ave.append(np.mean(score_tmp))
+        score_var.append(np.var(score_tmp))
+    return score_ave,score_var
+
+def negent_score(X,fun='logcosh'):
+    # We compute J(X) = [E(G(X)) - E(G(Xgauss))]**2
+    # We consider X (and Xgauss) to be white, in the sense that E(X,X.T)=I
+    # The expectation being approximated by the sample mean in our case: np.dot(X,X.T)/n=I
+    # In practice, we assume that X has already been normalized by its length [np.dot(X,X.T)=I]
+    # so we rescale by np.sqrt(n) before we take the expectation value of G(X).
+    length=len(X)
+    Xscale = X*np.sqrt(length)
+    Xgauss = np.random.randn(length)
+    if(fun == 'logcosh'):
+        n1 = np.mean(f_logcosh(Xscale)) #np.sum(f_logcosh(Xscale))
+        n2 = np.mean(f_logcosh(Xgauss)) #np.sum(f_logcosh(Xgauss))
+    elif(fun == 'exp'):
+        n1 = np.mean(f_exp(Xscale))     #np.sum(f_exp(Xscale))
+        n2 = np.mean(f_exp(Xgauss))     #np.sum(f_exp(Xgauss))
+    elif(fun == 'rand'):
+        n1 = np.mean(f_logcosh(Xgauss)) #np.sum(f_logcosh(Xgauss))
+        n2 = 0
+    negent = (n2-n1)**2
+    return negent
+
+def f_logcosh(X):
+    return np.log(np.cosh(X))
+
+def f_exp(X):
+    return -np.exp(-(X**2)/2)
 
 ## READ-WRITE
 
@@ -188,12 +230,14 @@ def particles_write(file,mask=None,output_file='test.dat'):
 
 ## PLOT
 
-def plot_eig(dims,eigvec,eigval,figsize=4):
+def plot_eig(dims,eigvec,eigval,figsize=4, show_explained_variance=True,figname=''):
     """
     """
     dimarray = np.arange(len(dims))
+    #
     fig, (ax1,ax2) = plt.subplots(1,2,sharey=True,figsize=(2*figsize,figsize))
-    im1 = ax1.imshow(eigvec.T,cmap='seismic')
+    #
+    im1 = ax1.imshow(eigvec.T,vmin=-1,vmax=1,cmap='seismic')
     ax1.set_ylabel('component #')
     ax1.set_yticks(dimarray)
     ax1.set_yticklabels(np.arange(1,len(dims)+1))
@@ -201,9 +245,20 @@ def plot_eig(dims,eigvec,eigval,figsize=4):
     ax1.set_xticks(dimarray)
     ax1.set_xticklabels(dims,rotation='vertical')
     cbar = ax1.figure.colorbar(im1, ax=ax1)
-    im2 = ax2.barh(dimarray,eigval,color='black')
-    ax2.set_yticks(dimarray)
-    ax2.set_yticklabels(np.arange(0,len(dims)+2))
-    ax2.set_xlabel('eigenvalue')
+    #
+    value = eigval
+    if show_explained_variance:
+        value = (eigval**2)/np.sum(eigval**2)
+    dimarray_display = np.arange(-1,len(dims)+1)
+    eigval_display = np.append(np.insert(value,0,0),0)
+    im2 = ax2.barh(dimarray_display,eigval_display,height=0.8, color='black')
+    #ax2.set_yticks(dimarray_display)
+    #ax2.set_yticklabels(np.arange(0,len(dims)+2))
+    if show_explained_variance:
+        ax2.set_xlabel('ratio of explained variance')
+    else:
+        ax2.set_xlabel('eigenvalue')
     plt.tight_layout()
     plt.show()
+    if(figname):
+        fig.savefig(figname)
