@@ -68,12 +68,14 @@ def star2hdf5(starfile, hdf5file, path_to_mrcs):
             hf.create_dataset(key, data=content)
     print('> Done! Output at {}'.format(hdf5file))
 
-def star2hdf5_serial(starfile, hdf5file, path_to_mrcs, istep=-1, n_particles_max=-1):
+def star2hdf5_serial(starfile, hdf5file, path_to_mrcs, istep=-1, n_particles=-1):
     print("> Reading star file...")
     data = star_reader(starfile)
-    n_particles = len(data['metadata']['_rlnimagename'])
-    if(n_particles_max > 0):
-        n_particles = n_particles_max
+    n = len(data['metadata']['_rlnimagename'])
+    if(n_particles <= 0):
+      n_particles = n
+    if(n_particles > n):
+      n_particles = n
     if(istep<=0):
         istep = int(n_particles/100)
     with h5py.File(hdf5file, 'w') as hf:
