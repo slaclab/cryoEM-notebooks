@@ -172,8 +172,11 @@ def mrc2data(mrc_file = None):
     if mrc_file is not None:
         with mrcfile.open(mrc_file, 'r+', permissive=True) as mrc:
             micrograph = mrc.data
-        if(len(micrograph.shape)==2):
-            micrograph = micrograph[np.newaxis,...]
+        if micrograph is not None:
+            if(len(micrograph.shape)==2):
+                micrograph = micrograph[np.newaxis,...]
+        else:
+            print('Warning! data in {} is None...'.format(mrc_file))
         return micrograph
 
 ###### / dictionary approach
