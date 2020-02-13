@@ -124,7 +124,54 @@ def data2mrc(mrc_filename,data,mrc_template=None):
         mrc = mrcfile.open(mrc_filename, mode='r+')
         mrc.data[:] = data
         mrc.close()
-    
+
+### mrc and their power spectra
+
+def data2psd(data, log=True):
+    """data2psd
+    """
+    data_psd = np.fft.fftn(data, s=data.shape)
+    data_psd = np.fft.fftshift(data_psd)
+    data_psd = np.absolute(data_psd)**2
+    if log:
+        data_psd = np.log(data_psd)
+    return data_psd
+
+def showdata(data, level=[1,1]):
+    """
+    """
+    vmin = np.mean(data) - level[0]*np.std(data)
+    vmax = np.mean(data) + level[1]*np.std(data)
+    fig = plt.figure(figsize=(12,4))
+    plt.subplot(1,3,1)
+    plt.imshow(np.mean(data, axis=0), vmin=vmin, vmax=vmax, cmap='Greys_r')
+    plt.subplot(1,3,2)
+    plt.imshow(np.mean(data, axis=1), vmin=vmin, vmax=vmax, cmap='Greys_r')
+    plt.subplot(1,3,3)
+    plt.imshow(np.mean(data, axis=2), vmin=vmin, vmax=vmax, cmap='Greys_r')
+    plt.show()
+
+def data2radialprofile(data):
+    """
+    adapted from https://gist.github.com/ViggieSmalls/3bc5ec52774cf6e672f49723f0aa4a47
+    """
+    center = (np.floor(data.shape)/2).astype(int)
+    indices = np.indices(data.shape)
+    indices_centered = (indices.T - center).T
+    radius = np.linalg.norm(indices_centered, axis=0)
+    radius_indices = np.argsort(radius.flat)
+    radius_sorted  = radius.flat[radius_indices]
+    data_sorted    = data.flat[radius_indices]
+    radius_integer = radius_sorted.astype(np.int16)
+    deltar = radius_integer[1:] - radius_integer[:-1]  # assume all radii represented (more work if not)
+    rind = np.where(deltar)[0]  # location of changed radius
+    nr = rind[1:] - rind[:-1]  # number of pixels in radius bin
+    data_cumul = np.cumsum(data_sorted, dtype=np.float64)  # cumulative sum for increasing radius
+    tbin = data_cumul[rind[1:]] - data_cumul[rind[:-1]]  # sum for image values in radius bins
+    radialprofile = tbin / nr
+    return radialprofile
+
+
 ### ad-hoc manipulations
 
 def cut_thresholded_map(input_map, 
