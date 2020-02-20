@@ -2,6 +2,7 @@ import shutil, os, sys
 #from prody import *
 from pylab import *
 from matplotlib import pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 import numpy as np
 import mrcfile
 from scipy.ndimage import gaussian_filter
@@ -137,10 +138,10 @@ def data2psd(data, log=True):
         data_psd = np.log(data_psd)
     return data_psd
 
-def showdata(data, level=[1,1]):
+def showdata(data, level=[-1,1]):
     """
     """
-    vmin = np.mean(data) - level[0]*np.std(data)
+    vmin = np.mean(data) + level[0]*np.std(data)
     vmax = np.mean(data) + level[1]*np.std(data)
     fig = plt.figure(figsize=(12,4))
     plt.subplot(1,3,1)
@@ -151,10 +152,14 @@ def showdata(data, level=[1,1]):
     plt.imshow(np.mean(data, axis=2), vmin=vmin, vmax=vmax, cmap='Greys_r')
     plt.show()
 
-def data2radialprofile(data):
+def data2radialprofile(data, psize=1.0, vmin=1e-6):
     """
     adapted from https://gist.github.com/ViggieSmalls/3bc5ec52774cf6e672f49723f0aa4a47
     """
+    print('> pixel size: {}'.format(psize))
+    N = data.shape[0]
+    L = N*psize
+    #
     center = (np.floor(data.shape)/2).astype(int)
     indices = np.indices(data.shape)
     indices_centered = (indices.T - center).T
@@ -168,9 +173,31 @@ def data2radialprofile(data):
     nr = rind[1:] - rind[:-1]  # number of pixels in radius bin
     data_cumul = np.cumsum(data_sorted, dtype=np.float64)  # cumulative sum for increasing radius
     tbin = data_cumul[rind[1:]] - data_cumul[rind[:-1]]  # sum for image values in radius bins
-    radialprofile = tbin / nr
-    return radialprofile
+    radialprofile = np.where(tbin / nr > vmin, tbin/nr, vmin)
+    #
+    freq = np.arange(radialprofile.shape[0])/L
+    #
+    return freq, radialprofile
 
+def plot_rasp(data, psize=1.0, offset=1.e-6, figsize=3, dpi=180):
+    """plot_rasp
+    """
+    N = data.shape[0]
+    freq, radialprofile = data2radialprofile(data, psize=psize, vmin=offset)
+    #
+    fig, ax= plt.subplots(figsize=(figsize,figsize), dpi=dpi)
+    ax.set_title('RAPS')
+    ax.set_xlabel('resolution (A)')
+    ax.set_ylabel('log10(radial PSD)')
+    ax.plot(freq[:np.int(N/2)],np.log(radialprofile)[:np.int(N/2)], color='black')
+    locs = ax.get_xticks()
+    np.set_printoptions(precision=2)
+    labels = ['{:0.2f}'.format(label) for label in 1/locs]
+    ax.set_xticklabels(labels[2:])
+    ax.set_xticks(locs[2:])
+    plt.grid()
+    plt.show()
+    return freq, radialprofile
 
 ### ad-hoc manipulations
 
