@@ -16,6 +16,62 @@ def read_csfile(csfile):
     header = np.array(header)
     return header, content
 
+### WIP !!!
+def cs2hdf5_serial(csfile, hdf5file, path_to_mrcs, istep=-1, n_particles=-1, n_range=None):
+    print("> Reading cs file...")
+    header, data = read_csfile(csfile)
+    #
+    n = data.shape[0]
+    if(n_particles <= 0):
+      n_particles = n
+    if(n_particles > n):
+      n_particles = n
+    particle_range = np.arange(n_particles)
+    print('n = {}'.format(n))
+    if n_range is not None:
+        #print('nrange is not Nonne')
+        if(n>np.maximum(n_range[0],n_range[-1])):
+            particle_range = n_range
+    print('particle range: '.format(particle_range))
+    with h5py.File(hdf5file, 'w') as hf:
+        print("> Writin metadata to h5 file...")
+        for key in header: #data['metadata'].keys():
+            print('>>> {}'.format(key))
+            try:
+                try:
+                    content = np.array(data[:,np.where(header==key)[0]], dtype='float_')
+                except:
+                    content = np.array(data[:,np.where(header==key)[0]], dtype='<S')
+            except:
+                print('WARNING! did not write {}'.format(key))
+            hf.create_dataset(key, data=content)
+        print('> Writing {} particle images to h5 file...'.format(n_particles))
+        for i in particle_range:
+            if(i % 10 == 0):
+                print('[{}/{}] '.format(i, n_particles), end=" ")
+            relpath = data[i,np.where(header=='blob/path')[0]][0].decode('ascii')
+            ptclidx = data[i,np.where(header=='blob/idx')[0]][0]
+            image = csimagename2image(relpath, ptclidx, path_to_mrcs)
+            #image = rlnimagename2image(data['metadata']['_rlnimagename'][i], path_to_mrcs)
+            image = image[np.newaxis,...]
+            if(i==0):
+                hf.create_dataset('particles', data=image, maxshape=(None,image.shape[1],image.shape[2]), chunks=True)
+            else:
+                hf['particles'].resize( (hf['particles'].shape[0] + image.shape[0]), axis=0 )
+                hf['particles'][-image.shape[0]:] = image
+        print('')
+    print('> Done! Output at {}'.format(hdf5file))
+
+def csimagename2image(relpath, ptclidx, path_to_mrcs):
+#    frame, relpath = particle.split('@')
+#    iframe = np.int(frame)
+    #mrcs_filename = relpath.split('/')[-1]
+    mrcs_file = path_to_mrcs+relpath #mrcs_filename
+    mrcs_data = mrc2data(mrc_file = mrcs_file)
+    image = mrcs_data[ptclidx-1,...]
+    return image
+### WIP !!!
+
 ## RELION related ##
 
 def star_reader(filename):
@@ -170,7 +226,7 @@ def mrc2data(mrc_file = None):
     """ mrc2data
     """
     if mrc_file is not None:
-        with mrcfile.open(mrc_file, 'r+', permissive=True) as mrc:
+        with mrcfile.open(mrc_file, 'r', permissive=True) as mrc:
             micrograph = mrc.data
         if micrograph is not None:
             if(len(micrograph.shape)==2):
