@@ -18,8 +18,8 @@ if [ ! -d $localdir ]; then
   echo "$ mkdir $localdir"
   exit
 fi
-updatels=${2:-'no'}
-osfls=${3:-'osf_list.txt'}
+updatels=${3:-'no'}
+osfls=${4:-'osf_list.txt'}
 if [ ! -f $osfls ]; then
   osf ls > $osfls
 else
